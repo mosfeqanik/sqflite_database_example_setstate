@@ -17,20 +17,41 @@ class NotesDatabase {
   }
 
   Future<Database> _initDB(String filePath) async {
+    /* 
+    * getDatabasesPath
+    * Get the default databases location.
+    * On Android, it is typically data/data/ /databases
+    * On iOS, it is the Documents director
+    * */
     final dbPath = await getDatabasesPath();
+    /* 
+    * filePath
+    * app database db
+    * */
     final path = join(dbPath, filePath);
 
-    return await openDatabase(path, version: 1, onCreate: _createDB);
+    /*
+    * onUpgrade 
+    * for SQL schema change in table 
+    */
+
+    return await openDatabase(path, version: 1, onCreate: _createDB,  );
   }
 
+  //Create DB
   Future _createDB(Database db, int version) async {
     final idType = 'INTEGER PRIMARY KEY AUTOINCREMENT';
     final textType = 'TEXT NOT NULL';
     final boolType = 'BOOLEAN NOT NULL';
     final integerType = 'INTEGER NOT NULL';
 
+    /* 
+    * db execute
+    * CREATE TABLE
+    * to create table 
+    */
     await db.execute('''
-CREATE TABLE $tableNotes ( 
+CREATE TABLE $tableNameNotes ( 
   ${NoteFields.id} $idType, 
   ${NoteFields.isImportant} $boolType,
   ${NoteFields.number} $integerType,
@@ -39,28 +60,47 @@ CREATE TABLE $tableNotes (
   ${NoteFields.time} $textType
   )
 ''');
+
+    /* 
+    * For CREATE ANOTHER TABLE
+    * copy above  db execute CREATE TABLE NewTable
+    */
   }
 
+    /* 
+    * create a single Note to db
+    */
   Future<Note> create(Note note) async {
     final db = await instance.database;
 
-    // final json = note.toJson();
-    // final columns =
-    //     '${NoteFields.title}, ${NoteFields.description}, ${NoteFields.time}';
-    // final values =
-    //     '${json[NoteFields.title]}, ${json[NoteFields.description]}, ${json[NoteFields.time]}';
-    // final id = await db
-    //     .rawInsert('INSERT INTO table_name ($columns) VALUES ($values)');
-
-    final id = await db.insert(tableNotes, note.toJson());
+    /* 
+    * final json = note.toJson();
+    * final columns =
+    *     '${NoteFields.title}, ${NoteFields.description}, ${NoteFields.time}';
+    * final values =
+    *     '${json[NoteFields.title]}, ${json[NoteFields.description]}, ${json[NoteFields.time]}';
+    * final id = await db
+    *     .rawInsert('INSERT INTO table_name ($columns) VALUES ($values)');
+    * Example 
+    * int id1 = await db.rawInsert(
+    *     'INSERT INTO Test(name, value, num) VALUES("some name", 1234, 456.789)');
+    * int id2 = await db.rawInsert(
+    *     'INSERT INTO Test(name, value, num) VALUES(?, ?, ?)',
+    *     ['another name', 12345678, 3.1416]);
+    *
+    */
+    final id = await db.insert(tableNameNotes, note.toJson(),conflictAlgorithm: ConflictAlgorithm.replace,);
     return note.copy(id: id);
   }
 
+      /* 
+    * Read a Single Note
+    */  
   Future<Note> readNote(int id) async {
     final db = await instance.database;
 
     final maps = await db.query(
-      tableNotes,
+      tableNameNotes,
       columns: NoteFields.values,
       where: '${NoteFields.id} = ?',
       whereArgs: [id],
@@ -80,7 +120,7 @@ CREATE TABLE $tableNotes (
     // final result =
     //     await db.rawQuery('SELECT * FROM $tableNotes ORDER BY $orderBy');
 
-    final result = await db.query(tableNotes, orderBy: orderBy);
+    final result = await db.query(tableNameNotes, orderBy: orderBy);
 
     return result.map((json) => Note.fromJson(json)).toList();
   }
@@ -89,7 +129,7 @@ CREATE TABLE $tableNotes (
     final db = await instance.database;
 
     return db.update(
-      tableNotes,
+      tableNameNotes,
       note.toJson(),
       where: '${NoteFields.id} = ?',
       whereArgs: [note.id],
@@ -100,7 +140,7 @@ CREATE TABLE $tableNotes (
     final db = await instance.database;
 
     return await db.delete(
-      tableNotes,
+      tableNameNotes,
       where: '${NoteFields.id} = ?',
       whereArgs: [id],
     );

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:sqflite_database_example/page/notes_page.dart';
 
 Future main() async {
+  // Avoid errors caused by flutter upgrade.
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

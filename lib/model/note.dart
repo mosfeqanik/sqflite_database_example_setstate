@@ -1,4 +1,4 @@
-final String tableNotes = 'notes';
+final String tableNameNotes = 'notes';
 
 class NoteFields {
   static final List<String> values = [
